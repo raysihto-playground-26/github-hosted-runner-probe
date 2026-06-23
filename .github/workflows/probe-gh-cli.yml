@@ -1,0 +1,35 @@
+name: "Probe: gh CLI environment"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: gh CLI location and version
+        run: |
+          echo "=== which ==="
+          which gh
+          echo ""
+          echo "=== version ==="
+          gh --version
+          echo ""
+          echo "=== binary details ==="
+          GH_BIN=$(which gh)
+          ls -la "$GH_BIN"
+          file "$GH_BIN"
+          echo ""
+          echo "=== parent dir ==="
+          ls -ld "$(dirname "$GH_BIN")"
+          echo ""
+          echo "=== installed via ==="
+          dpkg -S "$GH_BIN" 2>&1 || echo "Not from dpkg"
+          apt list --installed 2>/dev/null | grep gh || echo "Not in apt"
+          snap list gh 2>&1 || echo "Not from snap"
+          echo ""
+          echo "=== apt source (if any) ==="
+          grep -r "cli.github.com" /etc/apt/sources.list.d/ 2>/dev/null || echo "No GitHub CLI apt source found"
+          echo ""
+          echo "=== gh extensions ==="
+          gh extension list 2>&1 || echo "No extensions"
