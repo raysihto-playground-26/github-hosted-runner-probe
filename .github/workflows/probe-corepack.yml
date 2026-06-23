@@ -1,0 +1,61 @@
+name: "Probe: corepack environment"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Node / corepack locations
+        run: |
+          echo "=== which ==="
+          which node corepack npm npx
+          echo ""
+          echo "=== versions ==="
+          node --version
+          corepack --version
+          echo ""
+          echo "=== node binary and parent dir ==="
+          NODE_BIN=$(which node)
+          NODE_DIR=$(dirname "$NODE_BIN")
+          ls -la "$NODE_BIN"
+          ls -la "$NODE_DIR"/corepack* || true
+          ls -la "$NODE_DIR"/pnpm* || true
+          ls -la "$NODE_DIR"/yarn* || true
+          echo ""
+          echo "=== parent dir permissions ==="
+          ls -ld "$NODE_DIR"
+          echo ""
+          echo "=== id ==="
+          id
+          echo ""
+          echo "=== test write permission to node dir ==="
+          touch "$NODE_DIR/.write-test" 2>&1 && echo "WRITABLE" && rm "$NODE_DIR/.write-test" || echo "NOT WRITABLE"
+
+      - name: corepack enable (before setup-node)
+        run: |
+          echo "=== corepack enable ==="
+          corepack enable
+          echo ""
+          echo "=== symlinks after enable ==="
+          NODE_DIR=$(dirname "$(which node)")
+          ls -la "$NODE_DIR"/pnpm* || true
+          ls -la "$NODE_DIR"/yarn* || true
+
+      - name: setup-node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: After setup-node
+        run: |
+          echo "=== which (after setup-node) ==="
+          which node corepack npm npx
+          echo ""
+          echo "=== versions ==="
+          node --version
+          corepack --version
+          echo ""
+          echo "=== pnpm/yarn shims ==="
+          which pnpm yarn 2>&1 || true
